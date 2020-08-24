@@ -80,7 +80,7 @@ function copyRepoFile() {
         return
     fi
     echo "Copying file to user dir: ${1} to ${2}"
-    cp "${repoDir}/${1}" "${HOME}/${2}"
+    cp "${repoDir}/${1}" "${2}"
 }
 
 function copyRepoUserFile() {
