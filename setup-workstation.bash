@@ -65,13 +65,13 @@ phpPackages=(
     "php7.4-zip"
 )
 
-if [ $(whoami) != "root" ]; then
+if [ "$(whoami)" != "root" ]; then
     userCommand="sudo"
 fi
 
 function installPackages() {
-    echo "Installing: $1"
-    $userCommand apt install $1 --yes
+    echo "Installing: ${1}"
+    $userCommand apt install "${1}" --yes
 }
 
 function copyRepoFile() {
@@ -96,31 +96,30 @@ function installNerdfont() {
     fontFiles=("${2}" "${3}")
     echo "Downloading NerdFont ${1}"
     if [ ! -d "$nerdFontsTempPath" ]; then
-        mkdir -p $nerdFontsTempPath
+        mkdir -p "$nerdFontsTempPath"
     fi
-    cd $nerdFontsTempPath
-    wget -O "${nerdFontsTempPath}/${1}.zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${1}.zip"
+    cd "$nerdFontsTempPath"
 
-    if [ $? -ne 0 ]; then
+    if wget -O "${nerdFontsTempPath}/${1}.zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${1}.zip"; then
         echo "!!! Download of NerdFont ${1} failed"
         return
     fi
 
     echo "Download of ${1} completed. Unpacking..."
-    unzip -o "${nerdFontsTempPath}/${1}.zip" "${fontFiles}" -d "${nerdFontsTempPath}/${1}"
-    if [ $? -ne 0 ]; then
+
+    if unzip -o "${nerdFontsTempPath}/${1}.zip" "${fontFiles[@]}" -d "${nerdFontsTempPath}/${1}"; then
         echo "!!! Extraction of ${1}.zip failed!"
         return
     fi
 
     echo "Installing font to /usr/share/fonts"
     cd "${nerdFontsTempPath}/${1}"
-    $userCommand cp "$fontFiles" "/usr/share/fonts/"
-    cd "${repoDir}"
-    if [ $? -ne 0 ]; then
-        echo "!!! Installation of ${fontFiles} failed!"
+    if $userCommand cp "${fontFiles[@]}" "/usr/share/fonts/"; then
+        echo "!!! Installation of ${fontFiles[*]} failed!"
+        cd "${repoDir}"
         return
     fi
+    cd "${repoDir}"
 
     echo "NerdFont ${1} installed"
 }
@@ -128,7 +127,7 @@ function installNerdfont() {
 function copyScripts() {
     scripts=(./scripts/* ./scripts/**/*)
 
-    for script in ${scripts[@]}; do
+    for script in "${scripts[@]}"; do
         if [ -d "$script" ]; then
             echo "$script is a directory. Skipping."
             continue
@@ -187,7 +186,7 @@ fc-cache -f -v
 echo " "
 
 echo "=> Removing temporary font path..."
-rm -rf $nerdFontsTempPath
+rm -rf "$nerdFontsTempPath"
 echo " "
 
 echo "=> Copying utility scripts to /usr/local/bin..."
@@ -207,7 +206,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | $userCommand apt-key a
 $userCommand add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 $userCommand apt update
 installPackages "docker-ce docker-ce-cli containerd.io" --yes
-$userCommand adduser $(whoami) "docker"
+$userCommand adduser "$(whoami)" "docker"
 echo "/\\ You need to log out and back in if you want to user the 'docker' command with your user!"
 echo " "
 
@@ -228,7 +227,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash
 echo " "
 
 echo "?= Do you want to install a native PHP version (and not use docker for it)? (y/n)"
-usePhp=$(read -N 1)
+usePhp=$(read -r -N 1)
 if [[ "$usePhp" == "y" ]]; then
     echo "=> Installing PHP..."
     $userCommand add-apt-repository "ppa:ondrej/php"
@@ -241,7 +240,7 @@ fi
 echo " "
 
 echo "?= Do you want to install the Caddy webserver locally?"
-useCaddy=$(read -N 1)
+useCaddy=$(read -r -N 1)
 if [[ "$useCaddy" == "y" ]]; then
     echo "=> Installing Caddy webserver..."
     echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" | $userCommand tee -a /etc/apt/sources.list.d/caddy-fury.list
